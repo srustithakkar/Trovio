@@ -1,19 +1,68 @@
+import React, { useEffect, useState } from "react";
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  Navigate,
+} from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "react-query";
+import Carbons from "./components/Carbons";
 import Login from "./components/Login";
+import ProjectDetails from "./components/ProjectDetails";
+import Dashboard from "./components/Dashboard";
 
-/**
- * TODO:
- *
- * - Implement login functionality in the Login component.
- * - Redirect the user to the Dashboard component or show a <Carbons /> component after successful login.
- * - Implement all the provided tasks in the Carbons component.
- * - Implement logout functionality in the <DashboardHeader/> component and redirect the user to the Login component after logout.
- */
-function App() {
-    return (
-        <>
-            <Login />
-        </>
-    );
-}
+const queryClient = new QueryClient();
+
+const App: React.FC = () => {
+  const [login, setLogin] = useState(false);
+  const [user, setUser] = useState("");
+
+  useEffect(() => {
+    if (localStorage.getItem("token")) {
+      setLogin(true);
+      setUser(localStorage.getItem("username") || "");
+    }
+  }, []);
+
+  useEffect(() => {
+    console.log("user", user);
+  }, [user]);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <Routes>
+          <Route
+            path="/login"
+            element={
+              login ? (
+                <Navigate to="/dashboard" />
+              ) : (
+                <Login setLogin={setLogin} />
+              )
+            }
+          />
+          <Route
+            path="/dashboard/*"
+            element={
+              login ? (
+                <Dashboard setLogin={setLogin} username={user} />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          >
+            <Route
+              index
+              element={<Carbons setLogin={setLogin} username={user} />}
+            />
+            <Route path="project/:id" element={<ProjectDetails />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/login" />} />
+        </Routes>
+      </Router>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
